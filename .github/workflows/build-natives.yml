@@ -1,0 +1,307 @@
+name: Build Natives
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - SDL_TARGET
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    name: Build Windows Natives (${{ matrix.name }})
+
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+
+    env:
+      GAMEINPUT_VERSION: 3.4.259
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            name: windows-x86_64
+          - arch: ARM64
+            name: windows-aarch64
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Clone SDL3
+        shell: bash
+        run: |
+          git clone https://github.com/libsdl-org/SDL.git --branch main
+          cd SDL
+          git reset --hard "$(cat ../SDL_TARGET)"
+      - name: Install Microsoft.GameInput NuGet package
+        run: |
+          nuget install Microsoft.GameInput `
+            -Version $env:GAMEINPUT_VERSION `
+            -OutputDirectory .packages `
+            -DirectDownload `
+            -NonInteractive
+      - name: Build SDL3 for Windows ${{ matrix.arch }}
+        working-directory: SDL
+        run: |
+          $gameInputInclude = Join-Path `
+            $env:GITHUB_WORKSPACE `
+            ".packages/Microsoft.GameInput.$env:GAMEINPUT_VERSION/native/include"
+
+          cmake -S . -B build -A ${{ matrix.arch }} `
+            "-DCMAKE_C_FLAGS_RELWITHDEBINFO=/O1 /Ob1 /DNDEBUG /Zi /Gy /Gw /GL" `
+            "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=/O1 /Ob1 /DNDEBUG /Zi /Gy /Gw /GL" `
+            "-DCMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO=/DEBUG:FULL /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG" `
+            "-DCMAKE_PDB_OUTPUT_DIRECTORY_RELWITHDEBINFO=$env:GITHUB_WORKSPACE/symbols/${{ matrix.name }}" `
+            "-DSDL_CHECK_REQUIRED_INCLUDES=$gameInputInclude" `
+            -DSDL_VIDEO=OFF -DSDL_RENDER=OFF `
+            -DSDL_TESTS=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_EXAMPLES=OFF
+
+          if (-not (Select-String `
+            -Path build/CMakeCache.txt `
+            -Pattern '^HAVE_GAMEINPUT_H:INTERNAL=1$')) {
+              throw "SDL configuration did not enable GameInput"
+          }
+
+          cmake --build build --config RelWithDebInfo
+      - name: Collect Windows symbols
+        run: |
+          $pdb = "symbols/${{ matrix.name }}/SDL3.pdb"
+          if (-not (Test-Path $pdb)) {
+              throw "SDL3.pdb was not generated"
+          }
+      - name: Add SDL3.dll to folder
+        shell: bash
+        run: |
+          mkdir -p libs/natives/${{ matrix.name }}
+          cp SDL/build/RelWithDebInfo/SDL3.dll libs/natives/${{ matrix.name }}/SDL3.dll
+      - name: Attest native
+        uses: actions/attest@v4
+        with:
+          subject-path: libs/natives/${{ matrix.name }}/SDL3.dll
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: natives-${{ matrix.name }}
+          path: libs/natives/**
+      - name: Upload symbol artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: symbols-${{ matrix.name }}
+          path: symbols/${{ matrix.name }}/**
+          if-no-files-found: error
+  build-linux:
+    runs-on: ubuntu-latest
+    name: Build Linux Natives
+
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: [
+          # Running on x86_64 runner, nothing extra needed
+          {
+            name: "linux-x86_64",
+            packages: "",
+            cmakeargs: "",
+            toolchainprefix: "",
+          },
+          # Running on aarch64 runner, need to install gcc-aarch64-linux-gnu toolchain
+          {
+            name: "linux-aarch64",
+            packages: "crossbuild-essential-arm64",
+            cmakeargs: "-DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++",
+            toolchainprefix: "aarch64-linux-gnu-",
+          },
+        ]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Clone SDL3
+        run: |
+          git clone https://github.com/libsdl-org/SDL.git --branch main
+          cd SDL
+          git reset --hard "$(cat ../SDL_TARGET)"
+
+      - name: Get build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+            build-essential git make pkg-config cmake ninja-build \
+            gnome-desktop-testing \
+            libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev \
+            libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev \
+            libdbus-1-dev libibus-1.0-dev libudev-dev \
+            fcitx-libs-dev \
+            libpipewire-0.3-dev \
+            libwayland-dev \
+            libdecor-0-dev \
+            liburing-dev \
+            ${{ matrix.packages }}
+
+      - name: Build SDL3 for linux64
+        working-directory: SDL
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            ${{ matrix.cmakeargs }} \
+            -DCMAKE_C_FLAGS_RELEASE="-Oz -g -DNDEBUG -flto -ffunction-sections -fdata-sections" \
+            -DCMAKE_CXX_FLAGS_RELEASE="-Oz -g -DNDEBUG -flto -ffunction-sections -fdata-sections" \
+            -DCMAKE_SHARED_LINKER_FLAGS_RELEASE="-Wl,-O2 -Wl,--gc-sections -Wl,--build-id=sha1 -Wl,-z,noexecstack" \
+            -DSDL_VIDEO=OFF -DSDL_RENDER=OFF -DSDL_UNIX_CONSOLE_BUILD=ON \
+            -DSDL_TESTS=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_EXAMPLES=OFF
+          cmake --build build --config Release
+          mkdir -p ../symbols/${{ matrix.name }}
+          ${{ matrix.toolchainprefix }}objcopy \
+            --only-keep-debug \
+            build/libSDL3.so \
+            ../symbols/${{ matrix.name }}/libSDL3.so.debug
+          ${{ matrix.toolchainprefix }}objcopy \
+            --compress-debug-sections=zlib \
+            ../symbols/${{ matrix.name }}/libSDL3.so.debug
+          ${{ matrix.toolchainprefix }}strip --strip-unneeded build/libSDL3.so
+          ${{ matrix.toolchainprefix }}objcopy --remove-section=.comment --remove-section=.note build/libSDL3.so
+          ${{ matrix.toolchainprefix }}objcopy \
+            --add-gnu-debuglink=../symbols/${{ matrix.name }}/libSDL3.so.debug \
+            build/libSDL3.so
+
+      - name: Add SDL3.so to folder
+        run: |
+          mkdir -p libs/natives/${{ matrix.name }}
+          cp SDL/build/libSDL3.so libs/natives/${{ matrix.name }}/SDL3.so
+
+      - name: Attest native
+        uses: actions/attest@v4
+        with:
+          subject-path: libs/natives/${{ matrix.name }}/SDL3.so
+
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: natives-${{ matrix.name }}
+          path: libs/natives/**
+      - name: Upload symbol artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: symbols-${{ matrix.name }}
+          path: symbols/${{ matrix.name }}/**
+          if-no-files-found: error
+
+  build-macos:
+    runs-on: macos-latest
+    name: Build MacOS Natives
+
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: [
+          { name: "aarch64", arch: "arm64" },
+          { name: "x86_64", arch: "x86_64" },
+        ]
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Clone SDL3
+        run: |
+          git clone https://github.com/libsdl-org/SDL.git --branch main
+          cd SDL
+          git reset --hard "$(cat ../SDL_TARGET)"
+      - name: Get build dependencies
+        run: |
+          brew install --formula --quiet \
+            cmake coreutils
+      - name: Build SDL3 for mac64
+        working-directory: SDL
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS_RELEASE="-Oz -g -flto -DNDEBUG -ffunction-sections -fdata-sections" \
+            -DCMAKE_CXX_FLAGS_RELEASE="-Oz -g -flto -DNDEBUG -ffunction-sections -fdata-sections" \
+            -DCMAKE_SHARED_LINKER_FLAGS_RELEASE="-Wl,-dead_strip -Wl,-object_path_lto,$PWD/build/SDL3_lto.o" \
+            -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}" \
+            -DSDL_VIDEO=OFF -DSDL_RENDER=OFF \
+            -DSDL_TESTS=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_EXAMPLES=OFF
+          cmake --build build --config Release
+          mkdir -p ../symbols/macos-${{ matrix.name }}
+          dsymutil \
+            "$(greadlink -f build/libSDL3.dylib)" \
+            -o ../symbols/macos-${{ matrix.name }}/SDL3.dylib.dSYM
+          strip -x -S "$(greadlink -f build/libSDL3.dylib)"
+      - name: Add SDL3.dylib to folder
+        run: |
+          mkdir -p libs/natives/macos-${{ matrix.name }}
+          cp SDL/build/libSDL3.dylib libs/natives/macos-${{ matrix.name }}/SDL3.dylib
+      - name: Attest native
+        uses: actions/attest@v4
+        with:
+          subject-path: libs/natives/macos-${{ matrix.name }}/SDL3.dylib
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: natives-macos-${{ matrix.name }}
+          path: libs/natives/**
+      - name: Upload symbol artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: symbols-macos-${{ matrix.name }}
+          path: symbols/macos-${{ matrix.name }}/**
+          if-no-files-found: error
+
+  publish:
+    runs-on: ubuntu-latest
+    name: Publish Natives
+    permissions:
+      contents: write
+    needs: [build-windows, build-linux, build-macos]
+    if: (needs.build-windows.result == 'success' &&
+      needs.build-linux.result == 'success' &&
+      needs.build-macos.result == 'success')
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: enhanced
+
+      - name: Download built natives
+        uses: actions/download-artifact@v8
+        with:
+          pattern: natives-*
+          merge-multiple: true
+          path: libs/natives
+      - name: Publish Natives to Maven
+        run: |
+          chmod +x gradlew
+          ./gradlew publishNativesPublicationToXanderMavenRepository
+        env:
+          ORG_GRADLE_PROJECT_XanderMavenUsername: ${{ secrets.XANDER_MAVEN_USER }}
+          ORG_GRADLE_PROJECT_XanderMavenPassword: ${{ secrets.XANDER_MAVEN_PASS }}
