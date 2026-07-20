@@ -49,6 +49,19 @@ jobs:
             -OutputDirectory .packages `
             -DirectDownload `
             -NonInteractive
+      - name: Backport SDL GameInput v3 detection fix
+        run: |
+          $cmakeListsPath = "SDL/CMakeLists.txt"
+          $cmakeLists = Get-Content $cmakeListsPath -Raw
+          $cProbe = 'check_c_source_compiles\("\s*#include <stdbool\.h>\s*#define COBJMACROS\s*#include <gameinput\.h>'
+          $cxxProbe = 'check_cxx_source_compiles\("\s*#include <gameinput\.h>'
+
+          if ($cmakeLists -match $cProbe) {
+              $cmakeLists = $cmakeLists -replace $cProbe, "check_cxx_source_compiles(`"`n    #include <gameinput.h>"
+              Set-Content $cmakeListsPath $cmakeLists -NoNewline
+          } elseif ($cmakeLists -notmatch $cxxProbe) {
+              throw "Could not find SDL's GameInput header check"
+          }
       - name: Build SDL3 for Windows ${{ matrix.arch }}
         working-directory: SDL
         run: |
@@ -57,6 +70,7 @@ jobs:
             ".packages/Microsoft.GameInput.$env:GAMEINPUT_VERSION/native/include"
 
           cmake -S . -B build -A ${{ matrix.arch }} `
+            "-DCMAKE_CXX_FLAGS=/I$gameInputInclude" `
             "-DCMAKE_C_FLAGS_RELWITHDEBINFO=/O1 /Ob1 /DNDEBUG /Zi /Gy /Gw /GL" `
             "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=/O1 /Ob1 /DNDEBUG /Zi /Gy /Gw /GL" `
             "-DCMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO=/DEBUG:FULL /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG" `
