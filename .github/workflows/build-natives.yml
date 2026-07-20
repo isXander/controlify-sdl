@@ -311,7 +311,7 @@ jobs:
         with:
           pattern: natives-*
           merge-multiple: true
-          path: libs/natives
+          path: sdl-natives/libs/natives
       - name: Publish Natives to Maven
         run: |
           chmod +x gradlew
