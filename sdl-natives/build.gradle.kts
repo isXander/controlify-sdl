@@ -5,6 +5,8 @@ plugins {
 val sdlVersionProvider = providers.fileContents(rootProject.layout.projectDirectory.file("SDL_TARGET")).asText
 val sdlVersion = sdlVersionProvider.get()
 
+version = sdlVersion
+
 publishing {
     publications {
         register<MavenPublication>("natives") {
@@ -27,10 +29,6 @@ publishing {
                     }
                 }
             }
-
-            groupId = "dev.isxander"
-            artifactId = "controlify-sdl-natives"
-            version = sdlVersion
         }
     }
 }

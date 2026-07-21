@@ -2,8 +2,6 @@ plugins {
     id("sdl-java")
 }
 
-base.archivesName = "controlify-sdl-backend-lwjgl"
-
 dependencies {
     api(project(":sdl-api"))
 
