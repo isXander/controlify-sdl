@@ -61,4 +61,52 @@ public final class SdlCallbacks {
     public interface IoCloseCallback {
         boolean close(SdlPointer userdata);
     }
+
+    /// Called when a virtual joystick's state should be updated.
+    @FunctionalInterface
+    public interface VirtualJoystickUpdateCallback {
+        void update(SdlPointer userdata);
+    }
+
+    /// Called when a virtual joystick's player index is set.
+    @FunctionalInterface
+    public interface VirtualJoystickSetPlayerIndexCallback {
+        void setPlayerIndex(SdlPointer userdata, int playerIndex);
+    }
+
+    /// Implements rumble for a virtual joystick.
+    @FunctionalInterface
+    public interface VirtualJoystickRumbleCallback {
+        boolean rumble(SdlPointer userdata, short lowFrequencyRumble, short highFrequencyRumble);
+    }
+
+    /// Implements trigger rumble for a virtual joystick.
+    @FunctionalInterface
+    public interface VirtualJoystickRumbleTriggersCallback {
+        boolean rumbleTriggers(SdlPointer userdata, short leftRumble, short rightRumble);
+    }
+
+    /// Implements LED updates for a virtual joystick.
+    @FunctionalInterface
+    public interface VirtualJoystickSetLedCallback {
+        boolean setLed(SdlPointer userdata, byte red, byte green, byte blue);
+    }
+
+    /// Implements joystick-specific effect packets for a virtual joystick.
+    @FunctionalInterface
+    public interface VirtualJoystickSendEffectCallback {
+        boolean sendEffect(SdlPointer userdata, ByteBuffer data);
+    }
+
+    /// Implements sensor enablement for a virtual joystick.
+    @FunctionalInterface
+    public interface VirtualJoystickSetSensorsEnabledCallback {
+        boolean setSensorsEnabled(SdlPointer userdata, boolean enabled);
+    }
+
+    /// Cleans up a virtual joystick's userdata when the joystick is detached.
+    @FunctionalInterface
+    public interface VirtualJoystickCleanupCallback {
+        void cleanup(SdlPointer userdata);
+    }
 }

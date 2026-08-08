@@ -5,6 +5,7 @@ import dev.isxander.sdl.SdlJoystick;
 import dev.isxander.sdl.SdlJoystickHandle;
 import dev.isxander.sdl.SdlJoystickId;
 import dev.isxander.sdl.SdlPropertiesId;
+import dev.isxander.sdl.SdlVirtualJoystickDesc;
 import dev.isxander.sdl.SdlRefs.IntRef;
 import dev.isxander.sdl.SdlRefs.ShortRef;
 import dev.isxander.sdl.ffm.internal.SdlFfmNative;
@@ -18,10 +19,13 @@ import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 import static java.lang.foreign.ValueLayout.JAVA_BOOLEAN;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
+import static java.lang.foreign.ValueLayout.JAVA_FLOAT;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static java.lang.foreign.ValueLayout.JAVA_SHORT;
 
 final class SdlFfmJoystick implements SdlJoystick {
@@ -94,6 +98,70 @@ final class SdlFfmJoystick implements SdlJoystick {
             "SDL_GetJoystickFromPlayerIndex",
             FunctionDescriptor.of(
                     SdlLayouts.SDL_JOYSTICK,
+                    JAVA_INT));
+    private static final MethodHandle SDL_ATTACH_VIRTUAL_JOYSTICK_HANDLE = SdlFfmNative.downcall(
+            "SDL_AttachVirtualJoystick",
+            FunctionDescriptor.of(
+                    JAVA_INT,
+                    SdlLayouts.SDL_VIRTUAL_JOYSTICK_DESC));
+    private static final MethodHandle SDL_DETACH_VIRTUAL_JOYSTICK_HANDLE = SdlFfmNative.downcall(
+            "SDL_DetachVirtualJoystick",
+            FunctionDescriptor.of(
+                    JAVA_BOOLEAN,
+                    JAVA_INT));
+    private static final MethodHandle SDL_IS_JOYSTICK_VIRTUAL_HANDLE = SdlFfmNative.downcall(
+            "SDL_IsJoystickVirtual",
+            FunctionDescriptor.of(
+                    JAVA_BOOLEAN,
+                    JAVA_INT));
+    private static final MethodHandle SDL_SET_JOYSTICK_VIRTUAL_AXIS_HANDLE = SdlFfmNative.downcall(
+            "SDL_SetJoystickVirtualAxis",
+            FunctionDescriptor.of(
+                    JAVA_BOOLEAN,
+                    SdlLayouts.SDL_JOYSTICK,
+                    JAVA_INT,
+                    JAVA_SHORT));
+    private static final MethodHandle SDL_SET_JOYSTICK_VIRTUAL_BALL_HANDLE = SdlFfmNative.downcall(
+            "SDL_SetJoystickVirtualBall",
+            FunctionDescriptor.of(
+                    JAVA_BOOLEAN,
+                    SdlLayouts.SDL_JOYSTICK,
+                    JAVA_INT,
+                    JAVA_SHORT,
+                    JAVA_SHORT));
+    private static final MethodHandle SDL_SET_JOYSTICK_VIRTUAL_BUTTON_HANDLE = SdlFfmNative.downcall(
+            "SDL_SetJoystickVirtualButton",
+            FunctionDescriptor.of(
+                    JAVA_BOOLEAN,
+                    SdlLayouts.SDL_JOYSTICK,
+                    JAVA_INT,
+                    JAVA_BOOLEAN));
+    private static final MethodHandle SDL_SET_JOYSTICK_VIRTUAL_HAT_HANDLE = SdlFfmNative.downcall(
+            "SDL_SetJoystickVirtualHat",
+            FunctionDescriptor.of(
+                    JAVA_BOOLEAN,
+                    SdlLayouts.SDL_JOYSTICK,
+                    JAVA_INT,
+                    JAVA_BYTE));
+    private static final MethodHandle SDL_SET_JOYSTICK_VIRTUAL_TOUCHPAD_HANDLE = SdlFfmNative.downcall(
+            "SDL_SetJoystickVirtualTouchpad",
+            FunctionDescriptor.of(
+                    JAVA_BOOLEAN,
+                    SdlLayouts.SDL_JOYSTICK,
+                    JAVA_INT,
+                    JAVA_INT,
+                    JAVA_BOOLEAN,
+                    JAVA_FLOAT,
+                    JAVA_FLOAT,
+                    JAVA_FLOAT));
+    private static final MethodHandle SDL_SEND_JOYSTICK_VIRTUAL_SENSOR_DATA_HANDLE = SdlFfmNative.downcall(
+            "SDL_SendJoystickVirtualSensorData",
+            FunctionDescriptor.of(
+                    JAVA_BOOLEAN,
+                    SdlLayouts.SDL_JOYSTICK,
+                    JAVA_INT,
+                    JAVA_LONG,
+                    SdlLayouts.FLOAT_POINTER,
                     JAVA_INT));
     private static final MethodHandle SDL_GET_JOYSTICK_PROPERTIES_HANDLE = SdlFfmNative.downcall(
             "SDL_GetJoystickProperties",
@@ -268,9 +336,32 @@ final class SdlFfmJoystick implements SdlJoystick {
                     SdlLayouts.INT_POINTER));
 
     @Override
+    public SdlJoystickId SDL_AttachVirtualJoystick(SdlVirtualJoystickDesc desc) {
+        try (Arena arena = Arena.ofConfined()) {
+            return new SdlJoystickId((int) SDL_ATTACH_VIRTUAL_JOYSTICK_HANDLE.invokeExact(
+                    SdlFfmSupport.virtualJoystickDesc(desc, arena)));
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
     public void SDL_CloseJoystick(SdlJoystickHandle joystick) {
         try {
             SDL_CLOSE_JOYSTICK_HANDLE.invokeExact(SdlFfmSupport.segment(joystick.address()));
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
+    public boolean SDL_DetachVirtualJoystick(SdlJoystickId instanceId) {
+        try {
+            return (boolean) SDL_DETACH_VIRTUAL_JOYSTICK_HANDLE.invokeExact(instanceId.value());
         } catch (Error | RuntimeException exception) {
             throw exception;
         } catch (Throwable throwable) {
@@ -692,6 +783,17 @@ final class SdlFfmJoystick implements SdlJoystick {
     }
 
     @Override
+    public boolean SDL_IsJoystickVirtual(SdlJoystickId instanceId) {
+        try {
+            return (boolean) SDL_IS_JOYSTICK_VIRTUAL_HANDLE.invokeExact(instanceId.value());
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
     public void SDL_LockJoysticks() {
         try {
             SDL_LOCK_JOYSTICKS_HANDLE.invokeExact();
@@ -754,6 +856,21 @@ final class SdlFfmJoystick implements SdlJoystick {
     }
 
     @Override
+    public boolean SDL_SendJoystickVirtualSensorData(SdlJoystickHandle joystick, int type,
+                                                     long sensorTimestamp, FloatBuffer data) {
+        try {
+            return (boolean) SDL_SEND_JOYSTICK_VIRTUAL_SENSOR_DATA_HANDLE.invokeExact(
+                    SdlFfmSupport.segment(joystick.address()), type, sensorTimestamp,
+                    MemorySegment.ofBuffer(data), data.remaining()
+            );
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
     public void SDL_SetJoystickEventsEnabled(boolean enabled) {
         try {
             SDL_SET_JOYSTICK_EVENTS_ENABLED_HANDLE.invokeExact(enabled);
@@ -781,6 +898,67 @@ final class SdlFfmJoystick implements SdlJoystick {
     public boolean SDL_SetJoystickPlayerIndex(SdlJoystickHandle joystick, int playerIndex) {
         try {
             return (boolean) SDL_SET_JOYSTICK_PLAYER_INDEX_HANDLE.invokeExact(SdlFfmSupport.segment(joystick.address()), playerIndex);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
+    public boolean SDL_SetJoystickVirtualAxis(SdlJoystickHandle joystick, int axis, short value) {
+        try {
+            return (boolean) SDL_SET_JOYSTICK_VIRTUAL_AXIS_HANDLE.invokeExact(
+                    SdlFfmSupport.segment(joystick.address()), axis, value);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
+    public boolean SDL_SetJoystickVirtualBall(SdlJoystickHandle joystick, int ball, short xrel, short yrel) {
+        try {
+            return (boolean) SDL_SET_JOYSTICK_VIRTUAL_BALL_HANDLE.invokeExact(
+                    SdlFfmSupport.segment(joystick.address()), ball, xrel, yrel);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
+    public boolean SDL_SetJoystickVirtualButton(SdlJoystickHandle joystick, int button, boolean down) {
+        try {
+            return (boolean) SDL_SET_JOYSTICK_VIRTUAL_BUTTON_HANDLE.invokeExact(
+                    SdlFfmSupport.segment(joystick.address()), button, down);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
+    public boolean SDL_SetJoystickVirtualHat(SdlJoystickHandle joystick, int hat, byte value) {
+        try {
+            return (boolean) SDL_SET_JOYSTICK_VIRTUAL_HAT_HANDLE.invokeExact(
+                    SdlFfmSupport.segment(joystick.address()), hat, value);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
+    public boolean SDL_SetJoystickVirtualTouchpad(SdlJoystickHandle joystick, int touchpad, int finger,
+                                                  boolean down, float x, float y, float pressure) {
+        try {
+            return (boolean) SDL_SET_JOYSTICK_VIRTUAL_TOUCHPAD_HANDLE.invokeExact(
+                    SdlFfmSupport.segment(joystick.address()), touchpad, finger, down, x, y, pressure);
         } catch (Error | RuntimeException exception) {
             throw exception;
         } catch (Throwable throwable) {

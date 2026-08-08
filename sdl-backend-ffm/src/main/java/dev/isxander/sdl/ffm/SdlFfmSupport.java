@@ -13,6 +13,9 @@ import dev.isxander.sdl.SdlIoInterface;
 import dev.isxander.sdl.SdlIoStreamHandle;
 import dev.isxander.sdl.SdlJoystickId;
 import dev.isxander.sdl.SdlPointer;
+import dev.isxander.sdl.SdlVirtualJoystickDesc;
+import dev.isxander.sdl.SdlVirtualJoystickSensorDesc;
+import dev.isxander.sdl.SdlVirtualJoystickTouchpadDesc;
 import dev.isxander.sdl.SdlCallbacks.EventFilter;
 import dev.isxander.sdl.SdlEvents.SdlEventFilterRegistration;
 import dev.isxander.sdl.SdlGamepadBinding.Axis;
@@ -27,6 +30,7 @@ import dev.isxander.sdl.ffm.internal.SdlGuidLayout;
 import dev.isxander.sdl.ffm.internal.SdlHidDeviceInfoLayout;
 import dev.isxander.sdl.ffm.internal.SdlIoStreamInterfaceLayout;
 import dev.isxander.sdl.ffm.internal.SdlLayouts;
+import dev.isxander.sdl.ffm.internal.SdlVirtualJoystickDescLayout;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SegmentAllocator;
@@ -68,6 +72,58 @@ final class SdlFfmSupport {
         SdlIoStreamInterfaceLayout.flush(nativeInterface, CALLBACKS.address(io.flush()));
         SdlIoStreamInterfaceLayout.close(nativeInterface, CALLBACKS.address(io.close()));
         return new SdlIoStreamHandle(SdlFfmIoStream.SDL_OpenIO(nativeInterface, segment(userdata.address())).address());
+    }
+
+    static MemorySegment virtualJoystickDesc(SdlVirtualJoystickDesc desc, Arena arena) {
+        MemorySegment nativeDesc = SdlVirtualJoystickDescLayout.allocate(arena);
+        SdlVirtualJoystickDescLayout.version(nativeDesc, Math.toIntExact(SdlVirtualJoystickDescLayout.sizeof()));
+        SdlVirtualJoystickDescLayout.type(nativeDesc, (short) desc.type());
+        SdlVirtualJoystickDescLayout.vendorId(nativeDesc, (short) desc.vendorId());
+        SdlVirtualJoystickDescLayout.productId(nativeDesc, (short) desc.productId());
+        SdlVirtualJoystickDescLayout.numAxes(nativeDesc, (short) desc.numAxes());
+        SdlVirtualJoystickDescLayout.numButtons(nativeDesc, (short) desc.numButtons());
+        SdlVirtualJoystickDescLayout.numBalls(nativeDesc, (short) desc.numBalls());
+        SdlVirtualJoystickDescLayout.numHats(nativeDesc, (short) desc.numHats());
+        SdlVirtualJoystickDescLayout.buttonMask(nativeDesc, desc.buttonMask());
+        SdlVirtualJoystickDescLayout.axisMask(nativeDesc, desc.axisMask());
+        SdlVirtualJoystickDescLayout.name(nativeDesc, utf8(desc.name(), arena));
+
+        SdlVirtualJoystickTouchpadDesc[] touchpads = desc.touchpads();
+        SdlVirtualJoystickDescLayout.numTouchpads(nativeDesc, (short) touchpads.length);
+        MemorySegment nativeTouchpads = MemorySegment.NULL;
+        if (touchpads.length > 0) {
+            nativeTouchpads = SdlVirtualJoystickDescLayout.Touchpad.allocateArray(touchpads.length, arena);
+            for (int i = 0; i < touchpads.length; i++) {
+                SdlVirtualJoystickDescLayout.Touchpad.numFingers(
+                        SdlVirtualJoystickDescLayout.Touchpad.asSlice(nativeTouchpads, i),
+                        (short) touchpads[i].numFingers());
+            }
+        }
+        SdlVirtualJoystickDescLayout.touchpads(nativeDesc, nativeTouchpads);
+
+        SdlVirtualJoystickSensorDesc[] sensors = desc.sensors();
+        SdlVirtualJoystickDescLayout.numSensors(nativeDesc, (short) sensors.length);
+        MemorySegment nativeSensors = MemorySegment.NULL;
+        if (sensors.length > 0) {
+            nativeSensors = SdlVirtualJoystickDescLayout.Sensor.allocateArray(sensors.length, arena);
+            for (int i = 0; i < sensors.length; i++) {
+                MemorySegment nativeSensor = SdlVirtualJoystickDescLayout.Sensor.asSlice(nativeSensors, i);
+                SdlVirtualJoystickDescLayout.Sensor.type(nativeSensor, sensors[i].type());
+                SdlVirtualJoystickDescLayout.Sensor.rate(nativeSensor, sensors[i].rate());
+            }
+        }
+        SdlVirtualJoystickDescLayout.sensors(nativeDesc, nativeSensors);
+
+        SdlVirtualJoystickDescLayout.userdata(nativeDesc, segment(desc.userdata().address()));
+        SdlVirtualJoystickDescLayout.update(nativeDesc, CALLBACKS.address(desc.update()));
+        SdlVirtualJoystickDescLayout.setPlayerIndex(nativeDesc, CALLBACKS.address(desc.setPlayerIndex()));
+        SdlVirtualJoystickDescLayout.rumble(nativeDesc, CALLBACKS.address(desc.rumble()));
+        SdlVirtualJoystickDescLayout.rumbleTriggers(nativeDesc, CALLBACKS.address(desc.rumbleTriggers()));
+        SdlVirtualJoystickDescLayout.setLed(nativeDesc, CALLBACKS.address(desc.setLed()));
+        SdlVirtualJoystickDescLayout.sendEffect(nativeDesc, CALLBACKS.address(desc.sendEffect()));
+        SdlVirtualJoystickDescLayout.setSensorsEnabled(nativeDesc, CALLBACKS.address(desc.setSensorsEnabled()));
+        SdlVirtualJoystickDescLayout.cleanup(nativeDesc, CALLBACKS.address(desc.cleanup()));
+        return nativeDesc;
     }
 
     static boolean readOneEvent(SdlEvent target, Arena arena, Function<MemorySegment, Boolean> operation) {

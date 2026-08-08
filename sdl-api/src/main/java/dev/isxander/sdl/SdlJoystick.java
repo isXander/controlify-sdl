@@ -1,6 +1,7 @@
 package dev.isxander.sdl;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 import dev.isxander.sdl.SdlRefs.IntRef;
 import dev.isxander.sdl.SdlRefs.ShortRef;
@@ -124,6 +125,123 @@ public interface SdlJoystick {
 
     /// Get the SDL_Joystick associated with a player index.
     SdlJoystickHandle SDL_GetJoystickFromPlayerIndex(int playerIndex);
+
+    /// Attach a new virtual joystick.
+    ///
+    /// Apps can create virtual joysticks that have program-supplied inputs but no
+    /// directly backing hardware. Once attached, a virtual joystick looks like
+    /// any other joystick that SDL can access.
+    ///
+    /// @param desc the joystick description.
+    /// @return the joystick instance ID, or 0 on failure; call `SDL_GetError()`
+    ///         for more information.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    SdlJoystickId SDL_AttachVirtualJoystick(SdlVirtualJoystickDesc desc);
+
+    /// Detach a virtual joystick.
+    ///
+    /// @param instanceId the joystick instance ID returned from
+    ///                   `SDL_AttachVirtualJoystick()`.
+    /// @return true on success or false on failure; call `SDL_GetError()` for
+    ///         more information.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    boolean SDL_DetachVirtualJoystick(SdlJoystickId instanceId);
+
+    /// Query whether a joystick is virtual.
+    ///
+    /// @param instanceId the joystick instance ID.
+    /// @return true if the joystick is virtual, false otherwise.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    boolean SDL_IsJoystickVirtual(SdlJoystickId instanceId);
+
+    /// Set the state of an axis on an opened virtual joystick.
+    ///
+    /// Values set here are applied on the next call to `SDL_UpdateJoysticks()`.
+    ///
+    /// @param joystick the virtual joystick on which to set state.
+    /// @param axis the index of the axis to update.
+    /// @param value the new value for the axis.
+    /// @return true on success or false on failure; call `SDL_GetError()` for
+    ///         more information.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    boolean SDL_SetJoystickVirtualAxis(SdlJoystickHandle joystick, int axis, short value);
+
+    /// Generate ball motion on an opened virtual joystick.
+    ///
+    /// Values set here are applied on the next call to `SDL_UpdateJoysticks()`.
+    ///
+    /// @param joystick the virtual joystick on which to set state.
+    /// @param ball the index of the ball to update.
+    /// @param xrel the relative motion on the X axis.
+    /// @param yrel the relative motion on the Y axis.
+    /// @return true on success or false on failure; call `SDL_GetError()` for
+    ///         more information.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    boolean SDL_SetJoystickVirtualBall(SdlJoystickHandle joystick, int ball, short xrel, short yrel);
+
+    /// Set the state of a button on an opened virtual joystick.
+    ///
+    /// Values set here are applied on the next call to `SDL_UpdateJoysticks()`.
+    ///
+    /// @param joystick the virtual joystick on which to set state.
+    /// @param button the index of the button to update.
+    /// @param down true if the button is pressed, false otherwise.
+    /// @return true on success or false on failure; call `SDL_GetError()` for
+    ///         more information.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    boolean SDL_SetJoystickVirtualButton(SdlJoystickHandle joystick, int button, boolean down);
+
+    /// Set the state of a hat on an opened virtual joystick.
+    ///
+    /// Values set here are applied on the next call to `SDL_UpdateJoysticks()`.
+    ///
+    /// @param joystick the virtual joystick on which to set state.
+    /// @param hat the index of the hat to update.
+    /// @param value the new value for the hat, one of the `SDL_HAT_*` values.
+    /// @return true on success or false on failure; call `SDL_GetError()` for
+    ///         more information.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    boolean SDL_SetJoystickVirtualHat(SdlJoystickHandle joystick, int hat, byte value);
+
+    /// Set touchpad finger state on an opened virtual joystick.
+    ///
+    /// Values set here are applied on the next call to `SDL_UpdateJoysticks()`.
+    ///
+    /// @param joystick the virtual joystick on which to set state.
+    /// @param touchpad the index of the touchpad to update.
+    /// @param finger the index of the finger to update.
+    /// @param down true if the finger is pressed, false if it is released.
+    /// @param x the finger's x coordinate, normalized from 0 to 1.
+    /// @param y the finger's y coordinate, normalized from 0 to 1.
+    /// @param pressure the pressure of the finger.
+    /// @return true on success or false on failure; call `SDL_GetError()` for
+    ///         more information.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    boolean SDL_SetJoystickVirtualTouchpad(SdlJoystickHandle joystick, int touchpad, int finger,
+                                           boolean down, float x, float y, float pressure);
+
+    /// Send a sensor update for an opened virtual joystick.
+    ///
+    /// Values set here are applied on the next call to `SDL_UpdateJoysticks()`.
+    ///
+    /// @param joystick the virtual joystick on which to set state.
+    /// @param type the type of sensor to update.
+    /// @param sensorTimestamp a timestamp in nanoseconds associated with the reading.
+    /// @param data the data associated with the sensor reading.
+    /// @return true on success or false on failure; call `SDL_GetError()` for
+    ///         more information.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    boolean SDL_SendJoystickVirtualSensorData(SdlJoystickHandle joystick, int type,
+                                              long sensorTimestamp, FloatBuffer data);
 
     /// Get the properties associated with a joystick.
     ///

@@ -16,8 +16,17 @@ import dev.isxander.sdl.SdlCallbacks.IoReadCallback;
 import dev.isxander.sdl.SdlCallbacks.IoSeekCallback;
 import dev.isxander.sdl.SdlCallbacks.IoSizeCallback;
 import dev.isxander.sdl.SdlCallbacks.IoWriteCallback;
+import dev.isxander.sdl.SdlCallbacks.VirtualJoystickCleanupCallback;
+import dev.isxander.sdl.SdlCallbacks.VirtualJoystickRumbleCallback;
+import dev.isxander.sdl.SdlCallbacks.VirtualJoystickRumbleTriggersCallback;
+import dev.isxander.sdl.SdlCallbacks.VirtualJoystickSendEffectCallback;
+import dev.isxander.sdl.SdlCallbacks.VirtualJoystickSetLedCallback;
+import dev.isxander.sdl.SdlCallbacks.VirtualJoystickSetPlayerIndexCallback;
+import dev.isxander.sdl.SdlCallbacks.VirtualJoystickSetSensorsEnabledCallback;
+import dev.isxander.sdl.SdlCallbacks.VirtualJoystickUpdateCallback;
 import dev.isxander.sdl.ffm.internal.SdlAudioSpecLayout;
 import dev.isxander.sdl.ffm.internal.SdlIoStreamInterfaceLayout;
+import dev.isxander.sdl.ffm.internal.SdlVirtualJoystickDescLayout;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
@@ -83,6 +92,39 @@ final class SdlCallbackRegistry {
         }
         if (callback instanceof IoCloseCallback io) {
             return SdlIoStreamInterfaceLayout.Close.allocate(userdata -> io.close(pointer(userdata)), arena);
+        }
+        if (callback instanceof VirtualJoystickUpdateCallback update) {
+            return SdlVirtualJoystickDescLayout.Update.allocate(
+                    userdata -> update.update(pointer(userdata)), arena);
+        }
+        if (callback instanceof VirtualJoystickSetPlayerIndexCallback setPlayerIndex) {
+            return SdlVirtualJoystickDescLayout.SetPlayerIndex.allocate(
+                    (userdata, playerIndex) -> setPlayerIndex.setPlayerIndex(pointer(userdata), playerIndex), arena);
+        }
+        if (callback instanceof VirtualJoystickRumbleCallback rumble) {
+            return SdlVirtualJoystickDescLayout.Rumble.allocate(
+                    (userdata, low, high) -> rumble.rumble(pointer(userdata), low, high), arena);
+        }
+        if (callback instanceof VirtualJoystickRumbleTriggersCallback rumbleTriggers) {
+            return SdlVirtualJoystickDescLayout.RumbleTriggers.allocate(
+                    (userdata, left, right) -> rumbleTriggers.rumbleTriggers(pointer(userdata), left, right), arena);
+        }
+        if (callback instanceof VirtualJoystickSetLedCallback setLed) {
+            return SdlVirtualJoystickDescLayout.SetLed.allocate(
+                    (userdata, red, green, blue) -> setLed.setLed(pointer(userdata), red, green, blue), arena);
+        }
+        if (callback instanceof VirtualJoystickSendEffectCallback sendEffect) {
+            return SdlVirtualJoystickDescLayout.SendEffect.allocate((userdata, data, size) ->
+                    sendEffect.sendEffect(pointer(userdata),
+                            data.reinterpret(Integer.toUnsignedLong(size)).asByteBuffer()), arena);
+        }
+        if (callback instanceof VirtualJoystickSetSensorsEnabledCallback setSensorsEnabled) {
+            return SdlVirtualJoystickDescLayout.SetSensorsEnabled.allocate(
+                    (userdata, enabled) -> setSensorsEnabled.setSensorsEnabled(pointer(userdata), enabled), arena);
+        }
+        if (callback instanceof VirtualJoystickCleanupCallback cleanup) {
+            return SdlVirtualJoystickDescLayout.Cleanup.allocate(
+                    userdata -> cleanup.cleanup(pointer(userdata)), arena);
         }
         throw new UnsupportedOperationException("Unsupported SDL callback type: " + callback.getClass().getName());
     }

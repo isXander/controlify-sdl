@@ -47,6 +47,11 @@ public final class SdlLayouts {
             pointer("SDL_GamepadBinding **", SDL_GAMEPAD_BINDING);
     public static final AddressLayout SDL_HID_DEVICE_INFO = pointer("SDL_hid_device_info *");
     public static final AddressLayout SDL_IO_STREAM_INTERFACE = pointer("SDL_IOStreamInterface *");
+    public static final AddressLayout SDL_VIRTUAL_JOYSTICK_DESC = pointer("SDL_VirtualJoystickDesc *");
+    public static final AddressLayout SDL_VIRTUAL_JOYSTICK_TOUCHPAD_DESC =
+            pointer("SDL_VirtualJoystickTouchpadDesc *");
+    public static final AddressLayout SDL_VIRTUAL_JOYSTICK_SENSOR_DESC =
+            pointer("SDL_VirtualJoystickSensorDesc *");
 
     public static final AddressLayout SDL_AUDIO_DEVICE_ID_POINTER =
             pointer("SDL_AudioDeviceID *", JAVA_INT);
