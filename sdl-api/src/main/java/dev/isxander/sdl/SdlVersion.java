@@ -20,7 +20,7 @@ public interface SdlVersion {
     /// If this were SDL version 3.2.1, this value would be 1.
     ///
     /// @since This macro is available since SDL 3.2.0.
-    int SDL_MICRO_VERSION = 12;
+    int SDL_MICRO_VERSION = 14;
 
     /// Get the version of SDL that is linked against your program.
     ///
