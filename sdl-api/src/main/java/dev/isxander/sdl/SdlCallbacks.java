@@ -109,4 +109,14 @@ public final class SdlCallbacks {
     public interface VirtualJoystickCleanupCallback {
         void cleanup(SdlPointer userdata);
     }
+
+    @FunctionalInterface
+    public interface TimerCallback {
+        void invoke(SdlPointer userdata, SdlTimerId id, int interval);
+    }
+
+    @FunctionalInterface
+    public interface NSTimerCallback {
+        void invoke(SdlPointer userdata, SdlTimerId id, long interval);
+    }
 }

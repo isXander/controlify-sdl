@@ -1,21 +1,6 @@
 package dev.isxander.sdl.ffm;
 
-import dev.isxander.sdl.Sdl;
-import dev.isxander.sdl.SdlAudio;
-import dev.isxander.sdl.SdlError;
-import dev.isxander.sdl.SdlEvents;
-import dev.isxander.sdl.SdlGamepad;
-import dev.isxander.sdl.SdlGuidApi;
-import dev.isxander.sdl.SdlHidApi;
-import dev.isxander.sdl.SdlHints;
-import dev.isxander.sdl.SdlInit;
-import dev.isxander.sdl.SdlIoStream;
-import dev.isxander.sdl.SdlJoystick;
-import dev.isxander.sdl.SdlKeyboard;
-import dev.isxander.sdl.SdlPlatform;
-import dev.isxander.sdl.SdlProperties;
-import dev.isxander.sdl.SdlStdinc;
-import dev.isxander.sdl.SdlVersion;
+import dev.isxander.sdl.*;
 
 public final class SdlFfm implements Sdl {
     private final SdlFfmInit init;
@@ -33,6 +18,7 @@ public final class SdlFfm implements Sdl {
     private final SdlFfmKeyboard keyboard;
     private final SdlFfmStdinc stdinc;
     private final SdlFfmGuidApi guid;
+    private final SdlFfmTimer timer;
 
     SdlFfm() {
         this.init = new SdlFfmInit();
@@ -50,6 +36,7 @@ public final class SdlFfm implements Sdl {
         this.keyboard = new SdlFfmKeyboard();
         this.stdinc = new SdlFfmStdinc();
         this.guid = new SdlFfmGuidApi();
+        this.timer = new SdlFfmTimer();
     }
 
     @Override
@@ -125,5 +112,10 @@ public final class SdlFfm implements Sdl {
     @Override
     public SdlGuidApi guid() {
         return this.guid;
+    }
+
+    @Override
+    public SdlTimer timer() {
+        return this.timer;
     }
 }

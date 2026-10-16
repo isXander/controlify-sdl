@@ -77,6 +77,9 @@ public final class SdlLayouts {
     public static final AddressLayout SDL_IO_FLUSH_CALLBACK = pointer("SDL_IOStreamInterface.flush");
     public static final AddressLayout SDL_IO_CLOSE_CALLBACK = pointer("SDL_IOStreamInterface.close");
 
+    public static final AddressLayout SDL_TIMER_CALLBACK = pointer("SDL_TimerCallback");
+    public static final AddressLayout SDL_NS_TIMER_CALLBACK = pointer("SDL_NSTimerCallback");
+
     private SdlLayouts() {
     }
 

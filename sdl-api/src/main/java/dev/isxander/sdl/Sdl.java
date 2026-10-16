@@ -36,4 +36,6 @@ public interface Sdl {
     SdlStdinc stdinc();
 
     SdlGuidApi guid();
+
+    SdlTimer timer();
 }
