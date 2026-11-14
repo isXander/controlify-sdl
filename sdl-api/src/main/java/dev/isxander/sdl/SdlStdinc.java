@@ -1,5 +1,7 @@
 package dev.isxander.sdl;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.nio.ByteOrder;
 
 public interface SdlStdinc {
@@ -97,4 +99,45 @@ public interface SdlStdinc {
     ///
     /// @since This function is available since SDL 3.2.0.
     int SDL_GetNumAllocations();
+
+    /// Get the value of a variable in the environment.
+    ///
+    /// This function bypasses SDL's cached copy of the environment and is not
+    /// thread-safe.
+    ///
+    /// On some platforms, this may make case-insensitive matches, while other
+    /// platforms are case-sensitive. It is best to be precise with strings used
+    /// for queries through this interface. SDL_getenv is always case-sensitive,
+    /// however.
+    ///
+    /// @param name the name of the variable to get
+    /// @return a pointer to the value of the variable or NULL if it can't be found.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    @Nullable String SDL_getenv_unsafe(String name);
+
+    /// Set the value of a variable in the environment.
+    ///
+    /// @param name the name of the variable to set.
+    /// @param value the value of the variable to set.
+    /// @param overwrite 1 to overwrite the variable if it exists, 0 to return
+    ///                  success without setting the variable if it already exists.
+    /// @return 0 on success, -1 on error.
+    ///
+    /// This function is not thread safe, consider using
+    /// SDL_SetEnvironmentVariable() instead.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    int SDL_setenv_unsafe(String name, String value, boolean overwrite);
+
+    /// Clear a variable from the environment.
+    ///
+    /// @param name the name of the variable to unset.
+    /// @return 0 on success, -1 on error.
+    ///
+    /// This function is not thread safe, consider using
+    /// SDL_UnsetEnvironmentVariable() instead.
+    ///
+    /// @since This function is available since SDL 3.2.0.
+    int SDL_unsetenv_unsafe(String name);
 }

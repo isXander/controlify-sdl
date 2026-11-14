@@ -4,13 +4,14 @@ import dev.isxander.sdl.SdlPointer;
 import dev.isxander.sdl.SdlStdinc;
 import dev.isxander.sdl.ffm.internal.SdlFfmNative;
 import dev.isxander.sdl.ffm.internal.SdlLayouts;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 
-import static java.lang.foreign.ValueLayout.JAVA_INT;
-import static java.lang.foreign.ValueLayout.JAVA_LONG;
+import static java.lang.foreign.ValueLayout.*;
 
 final class SdlFfmStdinc implements SdlStdinc {
     private static final MethodHandle SDL_MALLOC_HANDLE = SdlFfmNative.downcall(
@@ -38,11 +39,69 @@ final class SdlFfmStdinc implements SdlStdinc {
             "SDL_GetNumAllocations",
             FunctionDescriptor.of(
                     JAVA_INT));
+    private static final MethodHandle SDL_GETENV_UNSAFE_HANDLE = SdlFfmNative.downcall(
+            "SDL_getenv_unsafe",
+            FunctionDescriptor.of(
+                    ADDRESS,
+                    ADDRESS));
+    private static final MethodHandle SDL_SETENV_UNSAFE_HANDLE = SdlFfmNative.downcall(
+            "SDL_setenv_unsafe",
+            FunctionDescriptor.of(
+                    JAVA_INT,
+                    ADDRESS,
+                    ADDRESS,
+                    JAVA_BOOLEAN));
+    private static final MethodHandle SDL_UNSETENV_UNSAFE_HANDLE = SdlFfmNative.downcall(
+            "SDL_unsetenv_unsafe",
+            FunctionDescriptor.of(
+                    JAVA_INT,
+                    ADDRESS));
 
     @Override
     public int SDL_GetNumAllocations() {
         try {
             return (int) SDL_GET_NUM_ALLOCATIONS_HANDLE.invokeExact();
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
+    public @Nullable String SDL_getenv_unsafe(String name) {
+        try (var arena = Arena.ofConfined()) {
+            MemorySegment cName = arena.allocateFrom(name);
+            var ptr = (MemorySegment) SDL_GETENV_UNSAFE_HANDLE.invokeExact(cName);
+            if (ptr.equals(MemorySegment.NULL)) {
+                return null;
+            }
+            return ptr.reinterpret(Long.MAX_VALUE).getString(0);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
+    public int SDL_setenv_unsafe(String name, String value, boolean overwrite) {
+        try (var arena = Arena.ofConfined()) {
+            MemorySegment cName = arena.allocateFrom(name);
+            MemorySegment cValue = arena.allocateFrom(value);
+            return (int) SDL_SETENV_UNSAFE_HANDLE.invokeExact(cName, cValue, overwrite);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    @Override
+    public int SDL_unsetenv_unsafe(String name) {
+        try (var arena = Arena.ofConfined()) {
+            MemorySegment cName = arena.allocateFrom(name);
+            return (int) SDL_UNSETENV_UNSAFE_HANDLE.invokeExact(cName);
         } catch (Error | RuntimeException exception) {
             throw exception;
         } catch (Throwable throwable) {
@@ -94,6 +153,8 @@ final class SdlFfmStdinc implements SdlStdinc {
             throw new AssertionError("Unexpected exception from SDL downcall", throwable);
         }
     }
+
+
 
     static void SDL_free(MemorySegment memory) {
         try {
