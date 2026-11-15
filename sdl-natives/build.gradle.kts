@@ -19,7 +19,22 @@ val nativesPaths = project.files(
 )
 
 tasks.jar {
-    from(nativesPaths)
+    // Match Controlify's Platform.getResourcePrefix() and System.mapLibraryName().
+    val resourcePrefixes = mapOf(
+        "windows-x86_64" to "win32-x86-64",
+        "windows-aarch64" to "win32-aarch64",
+        "linux-x86_64" to "linux-x86-64",
+        "linux-aarch64" to "linux-aarch64",
+        "macos-aarch64" to "darwin-aarch64",
+        "macos-x86_64" to "darwin-x86-64",
+    )
+    for (nativeFolder in nativesPaths) {
+        from(nativeFolder) {
+            into(resourcePrefixes.getValue(nativeFolder.name))
+            rename("SDL3\\.so", "libSDL3.so")
+            rename("SDL3\\.dylib", "libSDL3.dylib")
+        }
+    }
 }
 
 manifests {
