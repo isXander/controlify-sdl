@@ -84,8 +84,8 @@ jobs:
           path: symbols/${{ matrix.name }}/**
           if-no-files-found: error
   build-linux:
-    runs-on: ubuntu-latest
-    name: Build Linux Natives
+    runs-on: ${{ matrix.runner }}
+    name: Build Linux Natives (${{ matrix.name }})
 
     permissions:
       contents: read
@@ -96,22 +96,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: [
-          # Running on x86_64 runner, nothing extra needed
-          {
-            name: "linux-x86_64",
-            packages: "",
-            cmakeargs: "",
-            toolchainprefix: "",
-          },
-          # Running on aarch64 runner, need to install gcc-aarch64-linux-gnu toolchain
-          {
-            name: "linux-aarch64",
-            packages: "crossbuild-essential-arm64",
-            cmakeargs: "-DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++",
-            toolchainprefix: "aarch64-linux-gnu-",
-          },
-        ]
+        include:
+          - name: linux-x86_64
+            runner: ubuntu-24.04
+          - name: linux-aarch64
+            runner: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@v7
@@ -137,15 +126,13 @@ jobs:
             libpipewire-0.3-dev \
             libwayland-dev \
             libdecor-0-dev \
-            liburing-dev \
-            ${{ matrix.packages }}
+            liburing-dev
 
-      - name: Build SDL3 for linux64
+      - name: Build SDL3 for ${{ matrix.name }}
         working-directory: SDL
         run: |
           cmake -S . -B build \
             -DCMAKE_BUILD_TYPE=Release \
-            ${{ matrix.cmakeargs }} \
             -DCMAKE_C_FLAGS_RELEASE="-Oz -g -DNDEBUG -flto -ffunction-sections -fdata-sections" \
             -DCMAKE_CXX_FLAGS_RELEASE="-Oz -g -DNDEBUG -flto -ffunction-sections -fdata-sections" \
             -DCMAKE_SHARED_LINKER_FLAGS_RELEASE="-Wl,-O2 -Wl,--gc-sections -Wl,--build-id=sha1 -Wl,-z,noexecstack" \
@@ -153,16 +140,16 @@ jobs:
             -DSDL_TESTS=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_EXAMPLES=OFF
           cmake --build build --config Release
           mkdir -p ../symbols/${{ matrix.name }}
-          ${{ matrix.toolchainprefix }}objcopy \
+          objcopy \
             --only-keep-debug \
             build/libSDL3.so \
             ../symbols/${{ matrix.name }}/libSDL3.so.debug
-          ${{ matrix.toolchainprefix }}objcopy \
+          objcopy \
             --compress-debug-sections=zlib \
             ../symbols/${{ matrix.name }}/libSDL3.so.debug
-          ${{ matrix.toolchainprefix }}strip --strip-unneeded build/libSDL3.so
-          ${{ matrix.toolchainprefix }}objcopy --remove-section=.comment --remove-section=.note build/libSDL3.so
-          ${{ matrix.toolchainprefix }}objcopy \
+          strip --strip-unneeded build/libSDL3.so
+          objcopy --remove-section=.comment --remove-section=.note build/libSDL3.so
+          objcopy \
             --add-gnu-debuglink=../symbols/${{ matrix.name }}/libSDL3.so.debug \
             build/libSDL3.so
 
