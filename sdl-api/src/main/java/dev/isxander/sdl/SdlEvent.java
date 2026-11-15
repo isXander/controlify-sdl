@@ -41,7 +41,7 @@ public final class SdlEvent {
 
     public sealed interface EventData permits Common, JoyAxis, JoyBall, JoyHat, JoyButton,
             JoyDevice, JoyBattery, GamepadAxis, GamepadButton, GamepadDevice,
-            GamepadTouchpad, GamepadSensor {
+            GamepadTouchpad, GamepadSensor, GamepadCapSense {
     }
 
     /// Fields shared by every event
@@ -145,4 +145,13 @@ public final class SdlEvent {
                    + ", values=" + Arrays.toString(values) + ", sensorTimestamp=" + sensorTimestamp + ']';
         }
     }
+    /// Gamepad capsense event structure (event.gcapsense.*)
+    ///
+    /// @since This struct is available since SDL 3.6.0.
+    /// @param which the joystick instance ID
+    /// @param capsense the capsense type (`SDL_GAMEPAD_CAPSENSE_*`)
+    /// @param down true if the capsense is touched
+    public record GamepadCapSense(SdlJoystickId which, byte capsense, boolean down) implements EventData {
+    }
+
 }

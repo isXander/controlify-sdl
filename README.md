@@ -1,7 +1,7 @@
 # controlify-sdl
 
 Backend-neutral Java bindings for the controller-oriented subset of SDL 3 that was exposed by
-`libsdl4j-controlify`. The API targets SDL 3.4.12 and uses camel-case
+`libsdl4j-controlify`. The API targets SDL HEAD commit `fda4ece2775c80faf42e548c1631b4dd91b74469` (SDL 3.5.0 development headers) and uses camel-case
 Java type names. Native function names intentionally retain SDL's exact spelling.
 
 ## Modules

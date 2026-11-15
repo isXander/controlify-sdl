@@ -997,4 +997,76 @@ final class SdlFfmJoystick implements SdlJoystick {
             throw new AssertionError("Unexpected exception from SDL downcall", throwable);
         }
     }
+
+    private static final MethodHandle SDL_TRY_LOCK_JOYSTICKS_HANDLE = SdlFfmNative.downcall("SDL_TryLockJoysticks", FunctionDescriptor.of(JAVA_BOOLEAN));
+    @Override
+    public boolean SDL_TryLockJoysticks() {
+        try {
+            return (boolean) SDL_TRY_LOCK_JOYSTICKS_HANDLE.invokeExact();
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    private static final MethodHandle SDL_JOYSTICK_HAS_SENSOR_HANDLE = SdlFfmNative.downcall("SDL_JoystickHasSensor", FunctionDescriptor.of(JAVA_BOOLEAN, SdlLayouts.SDL_JOYSTICK, JAVA_INT));
+    @Override
+    public boolean SDL_JoystickHasSensor(SdlJoystickHandle joystick, int type) {
+        try {
+            return (boolean) SDL_JOYSTICK_HAS_SENSOR_HANDLE.invokeExact(SdlFfmSupport.segment(joystick.address()), type);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    private static final MethodHandle SDL_JOYSTICK_SENSOR_ENABLED_HANDLE = SdlFfmNative.downcall("SDL_JoystickSensorEnabled", FunctionDescriptor.of(JAVA_BOOLEAN, SdlLayouts.SDL_JOYSTICK, JAVA_INT));
+    @Override
+    public boolean SDL_JoystickSensorEnabled(SdlJoystickHandle joystick, int type) {
+        try {
+            return (boolean) SDL_JOYSTICK_SENSOR_ENABLED_HANDLE.invokeExact(SdlFfmSupport.segment(joystick.address()), type);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    private static final MethodHandle SDL_GET_JOYSTICK_SENSOR_DATA_RATE_HANDLE = SdlFfmNative.downcall("SDL_GetJoystickSensorDataRate", FunctionDescriptor.of(JAVA_FLOAT, SdlLayouts.SDL_JOYSTICK, JAVA_INT));
+    @Override
+    public float SDL_GetJoystickSensorDataRate(SdlJoystickHandle joystick, int type) {
+        try {
+            return (float) SDL_GET_JOYSTICK_SENSOR_DATA_RATE_HANDLE.invokeExact(SdlFfmSupport.segment(joystick.address()), type);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    private static final MethodHandle SDL_SET_JOYSTICK_SENSOR_ENABLED_HANDLE = SdlFfmNative.downcall("SDL_SetJoystickSensorEnabled", FunctionDescriptor.of(JAVA_BOOLEAN, SdlLayouts.SDL_JOYSTICK, JAVA_INT, JAVA_BOOLEAN));
+    @Override
+    public boolean SDL_SetJoystickSensorEnabled(SdlJoystickHandle joystick, int type, boolean enabled) {
+        try {
+            return (boolean) SDL_SET_JOYSTICK_SENSOR_ENABLED_HANDLE.invokeExact(SdlFfmSupport.segment(joystick.address()), type, enabled);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    private static final MethodHandle SDL_GET_JOYSTICK_SENSOR_DATA_HANDLE = SdlFfmNative.downcall("SDL_GetJoystickSensorData", FunctionDescriptor.of(JAVA_BOOLEAN, SdlLayouts.SDL_JOYSTICK, JAVA_INT, java.lang.foreign.ValueLayout.ADDRESS, JAVA_INT));
+    @Override
+    public boolean SDL_GetJoystickSensorData(SdlJoystickHandle joystick, int type, java.nio.FloatBuffer data) {
+        try {
+            return (boolean) SDL_GET_JOYSTICK_SENSOR_DATA_HANDLE.invokeExact(SdlFfmSupport.segment(joystick.address()), type, MemorySegment.ofBuffer(data), data.remaining());
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
 }

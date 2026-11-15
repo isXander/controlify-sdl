@@ -3,6 +3,7 @@ package dev.isxander.sdl;
 import dev.isxander.sdl.SdlCallbacks.EventFilter;
 
 public interface SdlEvents {
+
     byte SDL_RELEASED = 0;
     byte SDL_PRESSED = 1;
     /// Add events to the back of the queue.
@@ -33,6 +34,15 @@ public interface SdlEvents {
     /// The system theme changed
     int SDL_EVENT_SYSTEM_THEME_CHANGED = 0x108;
 
+    /// The window's ICC profile has changed
+    int SDL_EVENT_WINDOW_ICCPROF_CHANGED = 530;
+
+    /// Window settings have changed (on visionOS)
+    int SDL_EVENT_WINDOW_SETTINGS_CHANGED = 539;
+
+    /// Last event in the window event range (inclusive).
+    int SDL_EVENT_WINDOW_LAST = 539;
+
     /// Key pressed
     int SDL_EVENT_KEY_DOWN = 0x300;
     /// Key released
@@ -43,6 +53,13 @@ public interface SdlEvents {
     int SDL_EVENT_TEXT_INPUT = 0x303;
     /// Keymap changed due to a system event such as an input language or keyboard layout change.
     int SDL_EVENT_KEYMAP_CHANGED = 0x304;
+
+    /// First event in the keyboard event range (inclusive).
+    int SDL_EVENT_KEYBOARD_FIRST = 768;
+
+    /// Last event in the keyboard event range (inclusive).
+    int SDL_EVENT_KEYBOARD_LAST = 777;
+
     /// Mouse moved
     int SDL_EVENT_MOUSE_MOTION = 0x400;
     /// Mouse button pressed
@@ -51,6 +68,12 @@ public interface SdlEvents {
     int SDL_EVENT_MOUSE_BUTTON_UP = 0x402;
     /// Mouse wheel motion
     int SDL_EVENT_MOUSE_WHEEL = 0x403;
+
+    /// First event in the mouse event range (inclusive).
+    int SDL_EVENT_MOUSE_FIRST = 1024;
+
+    /// Last event in the mouse event range (inclusive).
+    int SDL_EVENT_MOUSE_LAST = 1029;
 
     /// Joystick axis motion
     int SDL_EVENT_JOYSTICK_AXIS_MOTION = 0x600;
@@ -70,6 +93,12 @@ public interface SdlEvents {
     int SDL_EVENT_JOYSTICK_BATTERY_UPDATED = 0x607;
     /// Joystick update is complete
     int SDL_EVENT_JOYSTICK_UPDATE_COMPLETE = 0x608;
+
+    /// First event in the joystick event range (inclusive).
+    int SDL_EVENT_JOYSTICK_FIRST = 1536;
+
+    /// Last event in the joystick event range (inclusive).
+    int SDL_EVENT_JOYSTICK_LAST = 1544;
 
     /// Gamepad axis motion
     int SDL_EVENT_GAMEPAD_AXIS_MOTION = 0x650;
@@ -96,11 +125,43 @@ public interface SdlEvents {
     /// Gamepad Steam handle has changed
     int SDL_EVENT_GAMEPAD_STEAM_HANDLE_UPDATED = 0x65B;
 
+    /// Gamepad capsense was touched
+    int SDL_EVENT_GAMEPAD_CAPSENSE_TOUCH = 1628;
+
+    /// Gamepad capsense was released
+    int SDL_EVENT_GAMEPAD_CAPSENSE_RELEASE = 1629;
+
+    /// First event in the gamepad event range (inclusive).
+    int SDL_EVENT_GAMEPAD_FIRST = 1616;
+
+    /// Last event in the gamepad event range (inclusive).
+    int SDL_EVENT_GAMEPAD_LAST = 1629;
+
     int SDL_EVENT_FINGER_DOWN = 0x700;
     int SDL_EVENT_FINGER_UP = 0x701;
     int SDL_EVENT_FINGER_MOTION = 0x702;
+
+    /// First event in the finger event range (inclusive).
+    int SDL_EVENT_FINGER_FIRST = 1792;
+
+    /// Last event in the finger event range (inclusive).
+    int SDL_EVENT_FINGER_LAST = 1795;
+
+    /// First event in the pinch event range (inclusive).
+    int SDL_EVENT_PINCH_FIRST = 1808;
+
+    /// Last event in the pinch event range (inclusive).
+    int SDL_EVENT_PINCH_LAST = 1810;
+
     /// The clipboard changed
     int SDL_EVENT_CLIPBOARD_UPDATE = 0x900;
+
+    /// First event in the clipboard event range (inclusive).
+    int SDL_EVENT_CLIPBOARD_FIRST = 2304;
+
+    /// Last event in the clipboard event range (inclusive).
+    int SDL_EVENT_CLIPBOARD_LAST = 2304;
+
     /// The system requests a file open
     int SDL_EVENT_DROP_FILE = 0x1000;
     /// text/plain drag-and-drop event
@@ -111,14 +172,62 @@ public interface SdlEvents {
     int SDL_EVENT_DROP_COMPLETE = 0x1003;
     /// Position while moving over the window
     int SDL_EVENT_DROP_POSITION = 0x1004;
+
+    /// First event in the drop event range (inclusive).
+    int SDL_EVENT_DROP_FIRST = 4096;
+
+    /// Last event in the drop event range (inclusive).
+    int SDL_EVENT_DROP_LAST = 4100;
+
     /// A new audio device is available
     int SDL_EVENT_AUDIO_DEVICE_ADDED = 0x1100;
     /// An audio device has been removed.
     int SDL_EVENT_AUDIO_DEVICE_REMOVED = 0x1101;
     /// An audio device's format has been changed by the system.
     int SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED = 0x1102;
+
+    /// First event in the audio device event range (inclusive).
+    int SDL_EVENT_AUDIO_DEVICE_FIRST = 4352;
+
+    /// Last event in the audio device event range (inclusive).
+    int SDL_EVENT_AUDIO_DEVICE_LAST = 4354;
+
     /// A sensor was updated
     int SDL_EVENT_SENSOR_UPDATE = 0x1200;
+
+    /// First event in the sensor event range (inclusive).
+    int SDL_EVENT_SENSOR_FIRST = 4608;
+
+    /// Last event in the sensor event range (inclusive).
+    int SDL_EVENT_SENSOR_LAST = 4608;
+
+    /// First event in the pen event range (inclusive).
+    int SDL_EVENT_PEN_FIRST = 4864;
+
+    /// Last event in the pen event range (inclusive).
+    int SDL_EVENT_PEN_LAST = 4871;
+
+    /// First event in the camera device event range (inclusive).
+    int SDL_EVENT_CAMERA_DEVICE_FIRST = 5120;
+
+    /// Last event in the camera device event range (inclusive).
+    int SDL_EVENT_CAMERA_DEVICE_LAST = 5123;
+
+    /// A user response to a system notification was received.
+    int SDL_EVENT_NOTIFICATION_ACTION_INVOKED = 5376;
+
+    /// First event in the notification event range (inclusive).
+    int SDL_EVENT_NOTIFICATION_FIRST = 5376;
+
+    /// Last event in the notification event range (inclusive).
+    int SDL_EVENT_NOTIFICATION_LAST = 5376;
+
+    /// First event in the render event range (inclusive).
+    int SDL_EVENT_RENDER_FIRST = 8192;
+
+    /// Last event in the render event range (inclusive).
+    int SDL_EVENT_RENDER_LAST = 8194;
+
     /// Signals the end of an event poll cycle
     int SDL_EVENT_POLL_SENTINEL = 0x7F00;
     /// Events SDL_EVENT_USER through SDL_EVENT_LAST are for your use,

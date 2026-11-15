@@ -29,7 +29,10 @@ public interface SdlGamepad {
     int SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT = 9;
     int SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR = 10;
     int SDL_GAMEPAD_TYPE_GAMECUBE = 11;
-    int SDL_GAMEPAD_TYPE_COUNT = 12;
+
+    int SDL_GAMEPAD_TYPE_STEAM = 12;
+
+    int SDL_GAMEPAD_TYPE_COUNT = 13;
 
     int SDL_GAMEPAD_AXIS_INVALID = -1;
     int SDL_GAMEPAD_AXIS_LEFTX = 0;
@@ -93,6 +96,28 @@ public interface SdlGamepad {
     int SDL_GAMEPAD_BUTTON_LABEL_CIRCLE = 6;
     int SDL_GAMEPAD_BUTTON_LABEL_SQUARE = 7;
     int SDL_GAMEPAD_BUTTON_LABEL_TRIANGLE = 8;
+
+    /// The list of capsense types on a gamepad
+    ///
+    /// @since This enum is available since SDL 3.6.0.
+    ///
+    /// See `SDL_GamepadHasCapSense`.
+    /// See `SDL_GetGamepadCapSense`.
+    int SDL_GAMEPAD_CAPSENSE_INVALID = -1;
+
+    /// Activated by touching the top of the left thumbstick
+    int SDL_GAMEPAD_CAPSENSE_LEFT_STICK = 0;
+
+    /// Activated by touching the top of the right thumbstick
+    int SDL_GAMEPAD_CAPSENSE_RIGHT_STICK = 1;
+
+    /// Activated by gripping the left handle of the controller
+    int SDL_GAMEPAD_CAPSENSE_LEFT_GRIP = 2;
+
+    /// Activated by gripping the right handle of the controller
+    int SDL_GAMEPAD_CAPSENSE_RIGHT_GRIP = 3;
+
+    int SDL_GAMEPAD_CAPSENSE_COUNT = 4;
 
     int SDL_GAMEPAD_BINDTYPE_NONE = 0;
     int SDL_GAMEPAD_BINDTYPE_BUTTON = 1;
@@ -296,6 +321,10 @@ public interface SdlGamepad {
     ///
     /// The following read-only properties are provided by SDL:
     ///
+    /// - `SDL_PROP_GAMEPAD_CONTAINER_ID_STRING`: a string identifying the
+    ///   container for this gamepad, if available. This can be compared with
+    ///   SDL_PROP_AUDIO_DEVICE_CONTAINER_ID_STRING to find associated audio
+    ///   devices.
     /// - `SDL_PROP_GAMEPAD_CAP_MONO_LED_BOOLEAN`: true if this gamepad has an LED
     ///   that has adjustable brightness
     /// - `SDL_PROP_GAMEPAD_CAP_RGB_LED_BOOLEAN`: true if this gamepad has an LED
@@ -306,6 +335,15 @@ public interface SdlGamepad {
     ///   left/right rumble
     /// - `SDL_PROP_GAMEPAD_CAP_TRIGGER_RUMBLE_BOOLEAN`: true if this gamepad has
     ///   simple trigger rumble
+    ///
+    /// @param gamepad a gamepad identifier previously returned by
+    ///                SDL_OpenGamepad().
+    /// @return a valid property ID on success or 0 on failure; call
+    ///          SDL_GetError() for more information.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.2.0.
     SdlPropertiesId SDL_GetGamepadProperties(SdlGamepadHandle gamepad);
 
     /// Get the instance ID of an opened gamepad.
@@ -512,6 +550,32 @@ public interface SdlGamepad {
     /// The number of values and interpretation of the data is sensor dependent.
     /// See the remarks in SDL_SensorType for details for each type of sensor.
     boolean SDL_GetGamepadSensorData(SdlGamepadHandle gamepad, int type, FloatBuffer data);
+
+    /// Return whether a gamepad has a particular capsense.
+    ///
+    /// @param gamepad the gamepad to query.
+    /// @param type the type of capsense to query.
+    /// @return true if the capsense exists, false otherwise.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.6.0.
+    ///
+    /// See `SDL_GetGamepadCapSense`.
+    boolean SDL_GamepadHasCapSense(SdlGamepadHandle gamepad, int type);
+
+    /// Get the current state of a capsense on a gamepad.
+    ///
+    /// @param gamepad a gamepad.
+    /// @param type the type of capsense to query.
+    /// @return true if the capsense is touched, false otherwise.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.6.0.
+    ///
+    /// See `SDL_GamepadHasCapSense`.
+    boolean SDL_GetGamepadCapSense(SdlGamepadHandle gamepad, int type);
 
     /// Start a rumble effect on a gamepad.
     ///

@@ -1016,4 +1016,16 @@ final class SdlFfmAudio implements SdlAudio {
             throw new AssertionError("Unexpected exception from SDL downcall", throwable);
         }
     }
+
+    private static final MethodHandle SDL_GET_AUDIO_DEVICE_PROPERTIES_HANDLE = SdlFfmNative.downcall("SDL_GetAudioDeviceProperties", FunctionDescriptor.of(JAVA_INT, JAVA_INT));
+    @Override
+    public SdlPropertiesId SDL_GetAudioDeviceProperties(SdlAudioDeviceId devid) {
+        try {
+            return new SdlPropertiesId((int) SDL_GET_AUDIO_DEVICE_PROPERTIES_HANDLE.invokeExact(devid.value()));
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
 }

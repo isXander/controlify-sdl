@@ -65,6 +65,19 @@ public interface SdlJoystick {
     /// Unlocking for atomic access to the joystick API.
     void SDL_UnlockJoysticks();
 
+    /// Locking for atomic access to the joystick API.
+    ///
+    /// The SDL joystick functions are thread-safe, however you can lock the
+    /// joysticks while processing to guarantee that the joystick list won't change
+    /// and joystick and gamepad events will not be delivered.
+    ///
+    /// @return true if the joysticks were successfully locked, false otherwise.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.6.0.
+    boolean SDL_TryLockJoysticks();
+
     /// Return whether a joystick is currently connected.
     boolean SDL_HasJoystick();
 
@@ -247,6 +260,8 @@ public interface SdlJoystick {
     ///
     /// The following read-only properties are provided by SDL:
     ///
+    /// - `SDL_PROP_JOYSTICK_CONTAINER_ID_STRING`: a string identifying the
+    ///   container for this joystick, if available.
     /// - `SDL_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN`: true if this joystick has an
     ///   LED that has adjustable brightness
     /// - `SDL_PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN`: true if this joystick has an LED
@@ -257,6 +272,14 @@ public interface SdlJoystick {
     ///   left/right rumble
     /// - `SDL_PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN`: true if this joystick has
     ///   simple trigger rumble
+    ///
+    /// @param joystick the SDL_Joystick obtained from SDL_OpenJoystick().
+    /// @return a valid property ID on success or 0 on failure; call
+    ///          SDL_GetError() for more information.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.2.0.
     SdlPropertiesId SDL_GetJoystickProperties(SdlJoystickHandle joystick);
 
     /// Get the implementation dependent name of a joystick.
@@ -371,6 +394,84 @@ public interface SdlJoystick {
 
     /// Get the current state of a button on a joystick.
     boolean SDL_GetJoystickButton(SdlJoystickHandle joystick, int button);
+
+    /// Return whether a joystick has a particular sensor.
+    ///
+    /// Sensors are disabled by default and SDL_SetJoystickSensorEnabled() is used
+    /// to enable them.
+    ///
+    /// @param joystick the joystick to query.
+    /// @param type the type of sensor to query.
+    /// @return true if the sensor exists, false otherwise.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.6.0.
+    ///
+    /// See `SDL_GetJoystickSensorData`.
+    /// See `SDL_GetJoystickSensorDataRate`.
+    /// See `SDL_SetJoystickSensorEnabled`.
+    boolean SDL_JoystickHasSensor(SdlJoystickHandle joystick, int type);
+
+    /// Set whether data reporting for a joystick sensor is enabled.
+    ///
+    /// Sensors are disabled by default and this function is used to enable them.
+    ///
+    /// @param joystick the joystick to update.
+    /// @param type the type of sensor to enable/disable.
+    /// @param enabled whether data reporting should be enabled.
+    /// @return true on success or false on failure; call SDL_GetError() for more
+    ///          information.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.6.0.
+    ///
+    /// See `SDL_JoystickHasSensor`.
+    /// See `SDL_JoystickSensorEnabled`.
+    boolean SDL_SetJoystickSensorEnabled(SdlJoystickHandle joystick, int type, boolean enabled);
+
+    /// Query whether sensor data reporting is enabled for a joystick.
+    ///
+    /// @param joystick the joystick to query.
+    /// @param type the type of sensor to query.
+    /// @return true if the sensor is enabled, false otherwise.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.6.0.
+    ///
+    /// See `SDL_SetJoystickSensorEnabled`.
+    boolean SDL_JoystickSensorEnabled(SdlJoystickHandle joystick, int type);
+
+    /// Get the data rate (number of events per second) of a joystick sensor.
+    ///
+    /// @param joystick the joystick to query.
+    /// @param type the type of sensor to query.
+    /// @return the data rate, or 0.0f if the data rate is not available.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.6.0.
+    float SDL_GetJoystickSensorDataRate(SdlJoystickHandle joystick, int type);
+
+    /// Get the current state of a joystick sensor.
+    ///
+    /// The number of values and interpretation of the data is sensor dependent.
+    /// See the remarks in SDL_SensorType for details for each type of sensor.
+    ///
+    /// @param joystick the joystick to query.
+    /// @param type the type of sensor to query.
+    /// @param data a buffer filled with the current sensor state.
+    /// @return true on success or false on failure; call SDL_GetError() for more
+    ///          information.
+    ///
+    /// Thread safety: It is safe to call this function from any thread.
+    ///
+    /// @since This function is available since SDL 3.6.0.
+    ///
+    /// The number of values read is `data.remaining()`.
+    boolean SDL_GetJoystickSensorData(SdlJoystickHandle joystick, int type, java.nio.FloatBuffer data);
 
     /// Start a rumble effect.
     ///

@@ -427,4 +427,16 @@ final class SdlFfmProperties implements SdlProperties {
             throw new AssertionError("Unexpected exception from SDL downcall", throwable);
         }
     }
+
+    private static final MethodHandle SDL_GET_NUM_PROPERTIES_HANDLE = SdlFfmNative.downcall("SDL_GetNumProperties", FunctionDescriptor.of(JAVA_INT, JAVA_INT));
+    @Override
+    public int SDL_GetNumProperties(SdlPropertiesId props) {
+        try {
+            return (int) SDL_GET_NUM_PROPERTIES_HANDLE.invokeExact(props.value());
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
 }

@@ -22,9 +22,6 @@ jobs:
       attestations: write
       artifact-metadata: write
 
-    env:
-      GAMEINPUT_VERSION: 3.4.259
-
     strategy:
       fail-fast: false
       matrix:
@@ -42,46 +39,20 @@ jobs:
           git clone https://github.com/libsdl-org/SDL.git --branch main
           cd SDL
           git reset --hard "$(cat ../SDL_TARGET)"
-      - name: Install Microsoft.GameInput NuGet package
-        run: |
-          nuget install Microsoft.GameInput `
-            -Version $env:GAMEINPUT_VERSION `
-            -OutputDirectory .packages `
-            -DirectDownload `
-            -NonInteractive
-      - name: Backport SDL GameInput v3 detection fix
-        run: |
-          $cmakeListsPath = "SDL/CMakeLists.txt"
-          $cmakeLists = Get-Content $cmakeListsPath -Raw
-          $cProbe = 'check_c_source_compiles\("\s*#include <stdbool\.h>\s*#define COBJMACROS\s*#include <gameinput\.h>'
-          $cxxProbe = 'check_cxx_source_compiles\("\s*#include <gameinput\.h>'
-
-          if ($cmakeLists -match $cProbe) {
-              $cmakeLists = $cmakeLists -replace $cProbe, "check_cxx_source_compiles(`"`n    #include <gameinput.h>"
-              Set-Content $cmakeListsPath $cmakeLists -NoNewline
-          } elseif ($cmakeLists -notmatch $cxxProbe) {
-              throw "Could not find SDL's GameInput header check"
-          }
       - name: Build SDL3 for Windows ${{ matrix.arch }}
         working-directory: SDL
         run: |
-          $gameInputInclude = Join-Path `
-            $env:GITHUB_WORKSPACE `
-            ".packages/Microsoft.GameInput.$env:GAMEINPUT_VERSION/native/include"
-
           cmake -S . -B build -A ${{ matrix.arch }} `
-            "-DCMAKE_CXX_FLAGS=/I$gameInputInclude" `
             "-DCMAKE_C_FLAGS_RELWITHDEBINFO=/O1 /Ob1 /DNDEBUG /Zi /Gy /Gw /GL" `
             "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=/O1 /Ob1 /DNDEBUG /Zi /Gy /Gw /GL" `
             "-DCMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO=/DEBUG:FULL /INCREMENTAL:NO /OPT:REF /OPT:ICF /LTCG" `
             "-DCMAKE_PDB_OUTPUT_DIRECTORY_RELWITHDEBINFO=$env:GITHUB_WORKSPACE/symbols/${{ matrix.name }}" `
-            "-DSDL_CHECK_REQUIRED_INCLUDES=$gameInputInclude" `
             -DSDL_VIDEO=OFF -DSDL_RENDER=OFF `
             -DSDL_TESTS=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_EXAMPLES=OFF
 
-          if (-not (Select-String `
-            -Path build/CMakeCache.txt `
-            -Pattern '^HAVE_GAMEINPUT_H:INTERNAL=1$')) {
+          $gameInputEnabled = Get-ChildItem build -Recurse -Filter SDL_build_config.h |
+            Select-String -Pattern '^#define SDL_JOYSTICK_GAMEINPUT 1$'
+          if (-not $gameInputEnabled) {
               throw "SDL configuration did not enable GameInput"
           }
 

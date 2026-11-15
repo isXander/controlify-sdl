@@ -1281,4 +1281,28 @@ final class SdlFfmGamepad implements SdlGamepad {
             throw new AssertionError("Unexpected exception from SDL downcall", throwable);
         }
     }
+
+    private static final MethodHandle SDL_GAMEPAD_HAS_CAP_SENSE_HANDLE = SdlFfmNative.downcall("SDL_GamepadHasCapSense", FunctionDescriptor.of(JAVA_BOOLEAN, SdlLayouts.SDL_GAMEPAD, JAVA_INT));
+    @Override
+    public boolean SDL_GamepadHasCapSense(SdlGamepadHandle gamepad, int type) {
+        try {
+            return (boolean) SDL_GAMEPAD_HAS_CAP_SENSE_HANDLE.invokeExact(SdlFfmSupport.segment(gamepad.address()), type);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
+
+    private static final MethodHandle SDL_GET_GAMEPAD_CAP_SENSE_HANDLE = SdlFfmNative.downcall("SDL_GetGamepadCapSense", FunctionDescriptor.of(JAVA_BOOLEAN, SdlLayouts.SDL_GAMEPAD, JAVA_INT));
+    @Override
+    public boolean SDL_GetGamepadCapSense(SdlGamepadHandle gamepad, int type) {
+        try {
+            return (boolean) SDL_GET_GAMEPAD_CAP_SENSE_HANDLE.invokeExact(SdlFfmSupport.segment(gamepad.address()), type);
+        } catch (Error | RuntimeException exception) {
+            throw exception;
+        } catch (Throwable throwable) {
+            throw new AssertionError("Unexpected exception from SDL downcall", throwable);
+        }
+    }
 }

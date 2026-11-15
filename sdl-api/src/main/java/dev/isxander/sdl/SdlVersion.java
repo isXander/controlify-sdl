@@ -13,14 +13,14 @@ public interface SdlVersion {
     /// If this were SDL version 3.2.1, this value would be 2.
     ///
     /// @since This macro is available since SDL 3.2.0.
-    int SDL_MINOR_VERSION = 4;
+    int SDL_MINOR_VERSION = 5;
 
     /// The current micro (or patchlevel) version of the SDL headers.
     ///
     /// If this were SDL version 3.2.1, this value would be 1.
     ///
     /// @since This macro is available since SDL 3.2.0.
-    int SDL_MICRO_VERSION = 14;
+    int SDL_MICRO_VERSION = 0;
 
     /// Get the version of SDL that is linked against your program.
     ///

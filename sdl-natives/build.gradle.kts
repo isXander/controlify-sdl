@@ -6,7 +6,7 @@ plugins {
 }
 
 val sdlVersionProvider = providers.fileContents(rootProject.layout.projectDirectory.file("SDL_TARGET")).asText
-val sdlVersion = sdlVersionProvider.get()
+val sdlVersion = sdlVersionProvider.get().trim()
 version = sdlVersion
 
 val nativesPaths = project.files(

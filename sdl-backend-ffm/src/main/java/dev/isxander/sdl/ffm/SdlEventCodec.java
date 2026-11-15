@@ -20,6 +20,8 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 
 import static dev.isxander.sdl.SdlEvents.SDL_EVENT_GAMEPAD_ADDED;
+import static dev.isxander.sdl.SdlEvents.SDL_EVENT_GAMEPAD_CAPSENSE_TOUCH;
+import static dev.isxander.sdl.SdlEvents.SDL_EVENT_GAMEPAD_CAPSENSE_RELEASE;
 import static dev.isxander.sdl.SdlEvents.SDL_EVENT_GAMEPAD_AXIS_MOTION;
 import static dev.isxander.sdl.SdlEvents.SDL_EVENT_GAMEPAD_BUTTON_DOWN;
 import static dev.isxander.sdl.SdlEvents.SDL_EVENT_GAMEPAD_BUTTON_UP;
@@ -86,6 +88,12 @@ final class SdlEventCodec {
                 yield new SdlEvent.JoyBattery(id(SdlJoyBatteryEvent.which(value)),
                         SdlJoyBatteryEvent.state(value), SdlJoyBatteryEvent.percent(value));
             }
+            // SDL_GamepadCapSenseEvent shares the button event layout; capsense replaces button.
+            case SDL_EVENT_GAMEPAD_CAPSENSE_TOUCH, SDL_EVENT_GAMEPAD_CAPSENSE_RELEASE -> {
+                MemorySegment value = SdlEventLayout.gbutton(event);
+                yield new SdlEvent.GamepadCapSense(id(SdlGamepadButtonEvent.which(value)),
+                        SdlGamepadButtonEvent.button(value), SdlGamepadButtonEvent.down(value));
+            }
             case SDL_EVENT_GAMEPAD_AXIS_MOTION -> {
                 MemorySegment value = SdlEventLayout.gaxis(event);
                 yield new SdlEvent.GamepadAxis(id(SdlGamepadAxisEvent.which(value)),
@@ -129,6 +137,14 @@ final class SdlEventCodec {
         SdlCommonEvent.timestamp(SdlEventLayout.common(event), source.timestamp());
         switch (source.data()) {
             case SdlEvent.Common ignored -> { }
+            case SdlEvent.GamepadCapSense data -> {
+                MemorySegment value = SdlEventLayout.gbutton(event);
+                SdlGamepadButtonEvent.type(value, source.type());
+                SdlGamepadButtonEvent.timestamp(value, source.timestamp());
+                SdlGamepadButtonEvent.which(value, data.which().value());
+                SdlGamepadButtonEvent.button(value, data.capsense());
+                SdlGamepadButtonEvent.down(value, data.down());
+            }
             case SdlEvent.JoyAxis data -> {
                 MemorySegment value = SdlEventLayout.jaxis(event);
                 commonJoy(value, data.which(), source);

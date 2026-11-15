@@ -5,7 +5,7 @@ plugins {
 group = "dev.isxander.sdl"
 
 val sdlVersionProvider = providers.fileContents(rootProject.layout.projectDirectory.file("SDL_TARGET")).asText
-val sdlVersion = sdlVersionProvider.get()
+val sdlVersion = sdlVersionProvider.get().trim()
 
 val buildNumber = System.getenv("GITHUB_RUN_NUMBER") ?: "local"
 
